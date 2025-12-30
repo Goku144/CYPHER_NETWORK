@@ -1,0 +1,6 @@
+This repository contains multiple components with different licenses:
+
+- /lib  → Apache License 2.0 (see /lib/LICENSE and /lib/NOTICE)
+- /src  → MIT License (see /cli/LICENSE)
+
+Canonical texts are also stored under /LICENSES.

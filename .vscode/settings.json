@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "cypher.h": "c",
+        "cypher_err.h": "c",
+        "stdio.h": "c"
+    }
+}
