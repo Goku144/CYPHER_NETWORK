@@ -67,6 +67,9 @@ void cy_inet_server(const char *port, int *clsd)
     sd = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
     if (sd == -1) cy_state("socket", -1);
 
+    int opt = 1;
+    if (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) cy_state("setsockopt(SO_REUSEADDR)", -1);
+
     if (bind(sd, servinfo->ai_addr, servinfo->ai_addrlen) == -1) cy_state("bind", -1);
 
     freeaddrinfo(servinfo);
