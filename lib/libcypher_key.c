@@ -2,6 +2,7 @@
 #include "../inc/cypher_const.h"
 #include "../inc/cypher_math.h"
 #include "../inc/cypher_algo.h"
+#include "../inc/cypher_rand.h"
 #include "../inc/cypher_key.h"
 
 void cy_aes_key_expansion(const CY_AES_KEY key, CY_AES_EKEY *w)
@@ -111,7 +112,7 @@ void cy_rsa_set_key(int fd, mp_bitcnt_t bitsize, mpz_t pub[2], mpz_t prv[2], int
     else
         cy_rsa_key_exp(pub[0], pub[1], &buf);  /* (e,n) */
 
-    /* mark header as "key frame" if you want (optional) */
+    /* mark header as "key frame" */
     buf.head.cy_key_flag = 1;
     buf.head.cy_key_type = CY_RSA;
 
@@ -146,7 +147,7 @@ void cy_rsa_key_gen(const mp_bitcnt_t bitsize, mpz_t **pubkey, mpz_t **prvkey)
     mpz_sub_ui(q, q, 1);
     mpz_mul(phi_n, p, q);
 
-    /* small-ish prime e like your style */
+    /* small-ish prime e*/
     cy_rsa_prime_prob_gen(bitsize / 10, e);
 
     /* must compute modular inverse: d = e^{-1} mod phi_n */

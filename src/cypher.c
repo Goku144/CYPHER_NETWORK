@@ -43,6 +43,8 @@
 #include <arpa/inet.h>
 #include "../inc/cypher.h"
 
+#define cy_version "1.0.0"
+
 /* ---------------- CLI types ---------------- */
 
 typedef enum 
@@ -173,6 +175,12 @@ int cy_parse_args(const int argc, const char **argv, cy_cli_t *out)
 
     for (int i = 1; i < argc; i++) {
         const char *a = argv[i];
+
+        if(strcmp(a, "--version") == 0 && argc == 2)
+        {
+            printf("%s: version "cy_version" (by Jebbari Marouane)\n", argv[0]);
+            exit(0);
+        }
 
         if (strcmp(a, "-sp") == 0) {
             if (seen_sp) die_arg(prog, "duplicate option", "-sp");
@@ -522,7 +530,7 @@ int main(const int argc, const char **argv)
             CY_AES_EKEY ekey;
             cy_aes_key_expansion(aes_key, &ekey);
 
-            /* 4) export AES key into CY_BUFF (note: your cy_aes_key_exp does not allocate) */
+            /* 4) export AES key into CY_BUFF */
             CY_BUFF plain_key;
             cy_aes_key_exp(aes_key, &plain_key);
 

@@ -65,8 +65,6 @@ typedef struct
     uint8_t *buffer;
 }CY_BUFF;
 
-void cy_getrand(const size_t len, uint8_t **buf);
-
 void cy_aes_key_expansion(const CY_AES_KEY key, CY_AES_EKEY *w);
 
 void cy_aes_key_gen(const CY_AES_size size, CY_AES_KEY *key);
