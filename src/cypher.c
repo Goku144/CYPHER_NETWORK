@@ -315,7 +315,7 @@ static int cy_aes_bits_to_mode(int bits)
 /* default policy if -kx not given */
 static int cy_rsa_bits_for_aes_exchange_default(const int aes_bits)
 {
-    /* You asked: allow overriding to 1024 even with AES-256 by using -kx 1024 */
+    /* allow overriding to 1024 even with AES-256 by using -kx 1024 */
     if (aes_bits == 128) return 2048;
     if (aes_bits == 192) return 3072;
     if (aes_bits == 256) return 4096;
@@ -389,7 +389,8 @@ static void cy_negotiate_or_die_server(int fd, const cy_cli_t *cli)
 
     cy_send_hello(fd, s_enc, s_bits);
 
-    if (c_enc != s_enc || c_bits != s_bits) {
+    if (c_enc != s_enc || c_bits != s_bits) 
+    {
         fprintf(stderr, "encryption mismatch (client != server)\n");
         exit(1);
     }
@@ -406,7 +407,8 @@ static void cy_negotiate_or_die_client(int fd, const cy_cli_t *cli)
     uint16_t s_bits = 0;
     cy_recv_hello(fd, &s_enc, &s_bits);
 
-    if (s_enc != c_enc || s_bits != c_bits) {
+    if (s_enc != c_enc || s_bits != c_bits) 
+    {
         fprintf(stderr, "encryption mismatch (server != client)\n");
         exit(1);
     }
