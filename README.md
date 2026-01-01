@@ -1,4 +1,3 @@
-````md
 # CYPHER_NETWORK
 
 A small C project that provides:
@@ -64,7 +63,6 @@ CYPHER/
 ├─ test/
 ├─ Makefile
 └─ README.md
-````
 
 ---
 
