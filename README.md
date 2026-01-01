@@ -193,7 +193,7 @@ cypher --version
 
 ---
 
-## Licensing (per your policy)
+## Licensing
 
 ### MIT — CLI only
 
