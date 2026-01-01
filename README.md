@@ -87,7 +87,7 @@ make
 make clean
 ```
 
-> The binary is typically produced in `core/bin/cypher` (depends on your Makefile output rules).
+> The binary is typically produced in `core/bin/cypher`.
 
 ---
 
