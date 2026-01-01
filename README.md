@@ -107,46 +107,46 @@ client: cypher -i <IPV4> -p <PORT> [-e <aes|rsa> <SIZE>] [-kx <RSA_BITS>]
 
 ```bash
 # server
-core/bin/cypher -sp 4444
+cypher -sp 4444
 
 # client
-core/bin/cypher -i 127.0.0.1 -p 4444
+cypher -i 127.0.0.1 -p 4444
 ```
 
 #### AES (128/192/256)
 
 ```bash
 # server
-core/bin/cypher -sp 4444 -e aes 256
+cypher -sp 4444 -e aes 256
 
 # client (must match)
-core/bin/cypher -i 127.0.0.1 -p 4444 -e aes 256
+cypher -i 127.0.0.1 -p 4444 -e aes 256
 ```
 
 #### AES + custom RSA exchange bits (`-kx`)
 
 ```bash
 # server
-core/bin/cypher -sp 4444 -e aes 256 -kx 1024
+cypher -sp 4444 -e aes 256 -kx 1024
 
 # client (must match)
-core/bin/cypher -i 127.0.0.1 -p 4444 -e aes 256 -kx 1024
+cypher -i 127.0.0.1 -p 4444 -e aes 256 -kx 1024
 ```
 
 #### RSA (>=1024)
 
 ```bash
 # server
-core/bin/cypher -sp 4444 -e rsa 2048
+cypher -sp 4444 -e rsa 2048
 
 # client (must match)
-core/bin/cypher -i 127.0.0.1 -p 4444 -e rsa 2048
+cypher -i 127.0.0.1 -p 4444 -e rsa 2048
 ```
 
 #### Version
 
 ```bash
-core/bin/cypher --version
+cypher --version
 ```
 
 ---
