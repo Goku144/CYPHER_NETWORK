@@ -218,14 +218,6 @@ All files in `lib/` are **Apache-2.0**:
 * `lib/libcypher_prot.c`
 * `lib/libcypher_rand.c`
 
-Recommended header for each of those:
-
-```c
-/* SPDX-License-Identifier: Apache-2.0
- * Copyright (c) 2025 Jebbari Marouane
- */
-```
-
 License texts are stored in:
 
 * `LICENSES/MIT.txt`
