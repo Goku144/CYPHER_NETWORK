@@ -1,25 +1,81 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include <stdbool.h>
 #include <stdint.h>
-#include <gmp.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-
-
+#include <stddef.h>
+#include <gmp.h> 
 
 #if !defined (__CY_API__)
 #define __CY_API__
 
+#define cy_version "1.0.0" 
+#define CY_HELLO_MAGIC 0x43594850u /* 'C''Y''H''P' */
 #define CY_BUFF_SIZE 2048
 #define CY_HEADER_SIZE 16
 #define CY_AES_PAD_SIZE 16
 #define CY_OK 0
+
+typedef struct __attribute__((packed)) // eliminate padding mismatch caused by the compiler
+{
+    uint32_t magic;
+    uint8_t  enc;
+    uint8_t  _pad;
+    uint16_t bits;
+} cy_hello_t;
+
+typedef struct 
+{
+    size_t cy_len;
+    uint8_t cy_pad_flag;
+    uint8_t cy_pad_len;
+    uint8_t cy_key_flag;
+    uint8_t cy_key_type;
+    uint8_t cy_enc_flag;
+    uint8_t cy_enc_type;
+    uint8_t cy_hash_flag;
+    uint8_t cy_hash_type;
+}CY_HEADER;
+
+typedef struct
+{
+    CY_HEADER head;
+    uint8_t *buffer;
+}CY_BUFF;
+
+typedef enum 
+{ 
+    CY_MODE_NONE=0, 
+    CY_MODE_SERVER, 
+    CY_MODE_CLIENT 
+} cy_mode_t;
+
+typedef enum 
+{ 
+    CY_TARGET_NONE=0, 
+    CY_TARGET_IPV4, 
+    CY_TARGET_NAME 
+} cy_target_t;
+
+typedef enum
+{
+    CY_ENC_NONE = 0,
+    CY_ENC_AES  = 1,
+    CY_ENC_RSA  = 2
+} cy_enc_t;
+
+typedef struct
+{
+    cy_mode_t mode;
+
+    cy_target_t target_kind;
+    const char *target;
+    const char *port;
+
+    bool enc_enabled;
+    cy_enc_t enc_type;
+    int enc_bits;         /* AES bits if -e aes, RSA bits if -e rsa */
+
+    bool kx_enabled;      /* true if -kx provided */
+    int  kx_bits;         /* RSA bits for AES key exchange */
+} cy_cli_t;
 
 typedef enum
 {
@@ -46,75 +102,114 @@ typedef struct
     size_t nr;
 }CY_AES_EKEY;
 
-typedef struct 
-{
-    size_t cy_len;
-    uint8_t cy_pad_flag;
-    uint8_t cy_pad_len;
-    uint8_t cy_key_flag;
-    uint8_t cy_key_type;
-    uint8_t cy_enc_flag;
-    uint8_t cy_enc_type;
-    uint8_t cy_hash_flag;
-    uint8_t cy_hash_type;
-}CY_HEADER;
+/* ---------------- usage helpers ---------------- */
 
-typedef struct
-{
-    CY_HEADER head;
-    uint8_t *buffer;
-}CY_BUFF;
+/**
+ * Print CLI usage/help text to stderr (modes, options, and examples).
+ */
+void cy_usage(const char *prog);
 
-void cy_aes_key_expansion(const CY_AES_KEY key, CY_AES_EKEY *w);
+/**
+ * Return non-zero if `s` is a non-empty string containing only ASCII digits [0-9].
+ */
+int is_all_digits(const char *s);
 
-void cy_aes_key_gen(const CY_AES_size size, CY_AES_KEY *key);
+/**
+ * Validate a TCP/UDP port string: numeric and in range [1..65535].
+ * Returns non-zero if valid.
+ */
+int is_valid_port(const char *port);
 
-void cy_aes_key_exp(const CY_AES_KEY key, CY_BUFF *buf);
+/**
+ * Validate an IPv4 address string using inet_pton(AF_INET, ...).
+ * Returns non-zero if valid.
+ */
+int is_valid_ipv4(const char *ip);
 
-void cy_aes_key_imp(const CY_BUFF buf, CY_AES_KEY *key);
+/**
+ * Parse a base-10 long from string `s`.
+ * Sets `*ok` to true on success (entire string consumed), false otherwise.
+ * Returns the parsed value (0 on failure).
+ */
+long parse_long(const char *s, bool *ok);
 
-void cy_rsa_key_gen(const mp_bitcnt_t bitsize, mpz_t **pubkey, mpz_t **prvkey);
+/**
+ * Case-insensitive ASCII string equality check (A-Z/a-z only via tolower()).
+ * Returns non-zero if strings are equal ignoring ASCII case.
+ */
+int streqi_ascii(const char *a, const char *b);
 
-void cy_rsa_key_exp(const mpz_t key0, const mpz_t key1, CY_BUFF *buf);
+/**
+ * Print a formatted CLI error message (optionally with `detail`), show usage, then exit(1).
+ */
+void die_arg(const char *prog, const char *msg, const char *detail);
 
-void cy_rsa_key_imp(const CY_BUFF buf, mpz_t key0, mpz_t key1);
+/**
+ * Parse command-line arguments into `*out` (server/client mode, target, port, -e, -kx).
+ * Returns 0 on success, -1 if `out` is NULL.
+ * Exits(1) on invalid arguments (via die_arg()).
+ */
+int cy_parse_args(const int argc, const char **argv, cy_cli_t *out);
 
-void cy_read(int fd, CY_BUFF *buf);
+/**
+ * Convert AES key size in bits (128/192/256) into the internal CY_AES_size mode value.
+ * Exits(1) if bits is invalid.
+ */
+int cy_aes_bits_to_mode(int bits);
 
-void cy_write(int fd, const CY_BUFF buf);
+/**
+ * Default RSA key size policy (in bits) used for AES session-key exchange when `-kx` is not provided.
+ * Exits(1) if `aes_bits` is invalid.
+ */
+int cy_rsa_bits_for_aes_exchange_default(const int aes_bits);
 
-void cy_recv(int fd, CY_BUFF *buf);
+/**
+ * Decide RSA key size (in bits) used for AES key exchange:
+ * returns `cli->kx_bits` if -kx was provided, else the default policy for `cli->enc_bits`.
+ */
+int cy_rsa_bits_for_aes_exchange(const cy_cli_t *cli);
 
-void cy_send(int fd, const CY_BUFF buf);
+/**
+ * Send a HELLO negotiation frame on `fd` containing {magic, enc, bits} in network byte order.
+ * Used to detect encryption/size mismatches between peers.
+ */
+void cy_send_hello(int fd, uint8_t enc, uint16_t bits);
 
-void cy_read_line(int fd, CY_BUFF *buf);
+/**
+ * Receive and validate a HELLO negotiation frame from `fd`, then output enc/bits.
+ * Exits(1) on EOF, wrong size, or bad magic.
+ */
+void cy_recv_hello(int fd, uint8_t *enc, uint16_t *bits);
 
-void cy_normal_full_duplex(int fd);
+/**
+ * Server-side negotiation: receive client HELLO, send server HELLO, then enforce exact match.
+ * Exits(1) if client/server encryption settings differ.
+ */
+void cy_negotiate_or_die_server(int fd, const cy_cli_t *cli);
 
-void cy_aes_full_duplex(int fd, const CY_AES_EKEY ekey);
+/**
+ * Client-side negotiation: send client HELLO, receive server HELLO, then enforce exact match.
+ * Exits(1) if client/server encryption settings differ.
+ */
+void cy_negotiate_or_die_client(int fd, const cy_cli_t *cli);
 
-void cy_rsa_full_duplex(int fd, const mpz_t *pubkey, const mpz_t *prvkey);
+/**
+ * Server-side AES mode negotiation + RSA key-exchange bits negotiation:
+ *  - first enforce AES settings match
+ *  - then negotiate RSA exchange bits (client proposes, server echoes expected)
+ * Stores chosen RSA bits in `*rsa_kx_bits_out` if non-NULL.
+ * Exits(1) on mismatch.
+ */
+void cy_negotiate_or_die_server_aes_kx(int fd, const cy_cli_t *cli, int *rsa_kx_bits_out);
 
-void cy_inet_server(const char *port, int *clsd);
+/**
+ * Client-side AES mode negotiation + RSA key-exchange bits negotiation:
+ *  - first enforce AES settings match
+ *  - then propose RSA exchange bits and require server to echo the same
+ * Stores chosen RSA bits in `*rsa_kx_bits_out` if non-NULL.
+ * Exits(1) on mismatch.
+ */
+void cy_negotiate_or_die_client_aes_kx(int fd, const cy_cli_t *cli, int *rsa_kx_bits_out);
 
-void cy_inet_client(const char *ipv4, const char *port, int *servsd);
-
-void cy_aes_get_key(int fd, CY_AES_EKEY *ekey);
-
-void cy_aes_set_key(int fd, CY_AES_EKEY *ekey);
-
-void cy_rsa_get_key(int fd, mpz_t key[2]);
-
-void cy_rsa_set_key(int fd, mp_bitcnt_t bitsize, mpz_t pub[2], mpz_t prv[2], int send_private);
-
-void cy_rsa_key_gen(const mp_bitcnt_t bitsize, mpz_t **pubkey, mpz_t **prvkey);
-
-void cy_aes_send_encrypted(int fd, CY_BUFF buf, const CY_AES_EKEY ekey);
-
-void cy_aes_recv_decrypted(int fd, CY_BUFF *buf, const CY_AES_EKEY ekey);
-
-void cy_rsa_send_encrypted(int fd, CY_BUFF buf, const mpz_t *pubkey);
-
-void cy_rsa_recv_decrypted(int fd, CY_BUFF *buf, const mpz_t *prvkey);
 
 #endif //__CY_API__

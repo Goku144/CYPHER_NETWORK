@@ -1,9 +1,21 @@
-#include "../inc/cypher_err.h"
-#include "../inc/cypher_const.h"
-#include "../inc/cypher_math.h"
-#include "../inc/cypher_key.h"
+/*
+ * Copyright (c) 2025 Jebbari Marouane
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "../inc/cypher_algo.h"
-#include "../inc/cypher.h"
+#include "../inc/cypher_const.h"
 
 void cy_rsa_encrypt(const uint8_t c, const mpz_t *key, mpz_ptr cy_msg)
 {
@@ -93,7 +105,6 @@ void cy_aes_inv_mix_columns(uint8_t *state)
         state[i + 12] = CY_AES_MUL11[tmp[0]] ^ CY_AES_MUL13[tmp[1]] ^ CY_AES_MUL9[tmp[2]]  ^ CY_AES_MUL14[tmp[3]];
     }
 }
-
 
 void cy_aes_encrypt(const CY_AES_EKEY ek, const uint8_t *pt, uint8_t *ct)
 {
